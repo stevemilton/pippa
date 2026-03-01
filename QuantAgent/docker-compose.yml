@@ -1,0 +1,34 @@
+version: "3.8"
+
+services:
+  ib-gateway:
+    image: ghcr.io/gnzsnz/ib-gateway:latest
+    container_name: ib-gateway
+    restart: unless-stopped
+    ports:
+      - "4001:4001"  # Live trading
+      - "4002:4002"  # Paper trading
+      - "5900:5900"  # VNC (for initial setup / debugging)
+    environment:
+      TWS_USERID: ${IBKR_USERNAME}
+      TWS_PASSWORD: ${IBKR_PASSWORD}
+      TRADING_MODE: ${IBKR_TRADING_MODE:-paper}
+      TWS_ACCEPT_INCOMING: "accept"
+      READ_ONLY_API: "yes"
+      VNC_SERVER_PASSWORD: ${VNC_PASSWORD:-quantagent}
+      TWS_SETTINGS_PATH: /opt/ibc/settings
+    volumes:
+      - ib-gateway-settings:/opt/ibc/settings
+    ulimits:
+      nofile:
+        soft: 10000
+        hard: 10000
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "4002"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  ib-gateway-settings:

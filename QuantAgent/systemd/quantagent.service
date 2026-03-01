@@ -1,0 +1,35 @@
+[Unit]
+Description=QuantAgent - Algorithmic Trading Scanner
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=simple
+User=quantagent
+Group=quantagent
+WorkingDirectory=/opt/quantagent
+EnvironmentFile=/opt/quantagent/.env
+ExecStart=/opt/quantagent/venv/bin/python -m quantagent.main
+
+# Restart on crash — 30s delay to avoid hammering IBKR on repeated failures
+Restart=on-failure
+RestartSec=30
+
+# Give it time to connect to IB Gateway on startup
+TimeoutStartSec=120
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=quantagent
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/quantagent
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
